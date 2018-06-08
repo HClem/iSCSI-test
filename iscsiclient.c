@@ -233,7 +233,7 @@ discovery(struct iscsi_context *iscsi_context, const char *portal, struct client
 	client_state->has_discovered_target = 1;
 	client_state->target_name    = strdup(addr->target_name);
 	client_state->target_address = strdup(addr->portals->portal);
-	
+
 	printf("discovery complete, send logout command\n");
 
 	if (iscsi_logout_sync(iscsi_context) != 0) {
@@ -277,14 +277,17 @@ main(void)
 		printf("Failed to set target name\n");
 		exit(1);
 	}
+#if 0
 	if (iscsi_set_alias(iscsi_context, alias) != 0) {
 		printf("Failed to add alias\n");
 		exit(1);
 	}
+#endif
 	if (iscsi_set_session_type(iscsi_context, ISCSI_SESSION_NORMAL) != 0) {
 		printf("Failed to set settion type to normal\n");
 		exit(1);
 	}
+        iscsi_set_header_digest(iscsi_context, ISCSI_HEADER_DIGEST_CRC32C_NONE);
 
 	if (iscsi_connect_sync(iscsi_context, client_state.target_address) != 0) {
 		printf("iscsi_connect failed : %s\n", iscsi_get_error(iscsi_context));
@@ -292,21 +295,24 @@ main(void)
 	}
 
 	printf("connected, send login command\n");
+	if (iscsi_set_session_type(iscsi_context, ISCSI_SESSION_NORMAL) != 0) {
+		printf("Failed to set settion type to normal\n");
+		exit(1);
+	}
 	iscsi_set_header_digest(iscsi_context, ISCSI_HEADER_DIGEST_CRC32C_NONE);
 	iscsi_set_target_username_pwd(iscsi_context, user, passwd);
-	//iscsi_set_initiator_username_pwd(iscsi_context, user, passwd);
 	if (iscsi_login_sync(iscsi_context) != 0) {
-		printf("iscsi_login failed hello\n");
+		printf("iscsi_login failed\n");
 		exit(1);
 	}
 
 	printf("Logged in normal session, send reportluns\n");
 	struct scsi_task *scsi_task = iscsi_reportluns_sync(iscsi_context, 0, 16);
+	printf("Logged in normal session, send reportluns\n");
 	if (!scsi_task) {
 		printf("failed to send reportluns command : %s\n", iscsi_get_error(iscsi_context));
 		exit(1);
 	}
-	printf("Logged in normal session, send reportluns\n");
 	reportluns(iscsi_context, scsi_task, &client_state);
 
 	iscsi_destroy_context(iscsi_context);
