@@ -1,6 +1,6 @@
 CC = gcc
-CPPFLAGS=
+CPPFLAGS=$(shell pkg-config --cflags libiscsi)
 CFLAGS=-Wall -Wextra -g
-LDLIBS= -liscsi
+LDLIBS= $(shell pkg-config --libs libiscsi)
 
 iscsiclient:
